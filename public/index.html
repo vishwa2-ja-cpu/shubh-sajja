@@ -1,0 +1,366 @@
+<title>Shubh Sajja</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rozha+One&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Layout: sticky bar, hero with search panel, tabbed card grid, details dialog with booking form */
+:root{
+  --bg:#fbf6f7;
+  --surface:#ffffff;
+  --fg:#2b1431;
+  --muted:#6d5a72;
+  --line:#e9dde9;
+  --accent:#b3264f;
+  --accent-fg:#ffffff;
+  --gold:#d99a0b;
+  --gold-soft:#fbefc9;
+  --ok:#1f7a4d;
+  --warn:#a8530b;
+  --warn-soft:#fde8d3;
+  --font-display:"Rozha One","Georgia",serif;
+  --font-body:"Hanken Grotesk",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#1a0e1e;--surface:#27162c;--fg:#f6ecf6;--muted:#b9a5bd;--line:#3d2a43;
+    --accent:#ef6d93;--accent-fg:#2b1431;--gold:#f0b429;--gold-soft:#3b2e0f;
+    --ok:#5fcf97;--warn:#f0a65c;--warn-soft:#3d2a14;color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#1a0e1e;--surface:#27162c;--fg:#f6ecf6;--muted:#b9a5bd;--line:#3d2a43;
+  --accent:#ef6d93;--accent-fg:#2b1431;--gold:#f0b429;--gold-soft:#3b2e0f;
+  --ok:#5fcf97;--warn:#f0a65c;--warn-soft:#3d2a14;color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:16px;line-height:1.5;padding-inline:16px}
+.wrap{max-width:1120px;margin-inline:auto}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+h1,h2,h3{font-family:var(--font-display);font-weight:400;text-wrap:balance;margin:0;line-height:1.15}
+
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--line);margin-inline:-16px;padding:12px 16px}
+.bar .wrap{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.brand{font-family:var(--font-display);font-size:1.5rem;color:var(--accent);letter-spacing:.01em}
+.brand small{font-family:var(--font-body);font-size:.75rem;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;margin-left:8px}
+.bar nav{display:flex;gap:16px;font-size:.9rem;font-weight:600}
+.bar nav a{color:var(--fg);text-decoration:none}
+.bar nav a:hover{color:var(--accent)}
+
+.hero{padding-block:40px 24px;display:grid;gap:24px}
+.hero h1{font-size:clamp(2rem,6vw,3.4rem);max-width:18ch}
+.hero h1 em{font-style:normal;color:var(--accent)}
+.hero p{margin:0;max-width:52ch;color:var(--muted);font-size:1.05rem}
+
+.search{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));align-items:end}
+.field{display:flex;flex-direction:column;gap:6px;min-width:0}
+.field label{font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.field input,.field select,.field textarea{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px;min-width:0;width:100%}
+.field input[type=range]{padding:0;accent-color:var(--accent);height:40px}
+.reset{background:none;border:1px solid var(--line);border-radius:8px;padding:10px 12px;cursor:pointer;font-weight:600}
+.reset:hover{border-color:var(--accent);color:var(--accent)}
+
+.tabs{display:flex;gap:8px;margin-top:24px;border-bottom:1px solid var(--line)}
+.tab{background:none;border:0;border-bottom:3px solid transparent;padding:10px 4px;margin-right:16px;font-weight:700;font-size:1rem;color:var(--muted);cursor:pointer}
+.tab[aria-selected=true]{color:var(--fg);border-bottom-color:var(--accent)}
+.tab span{font-weight:500;color:var(--muted);font-size:.85rem;margin-left:4px}
+
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 14px;font-size:.88rem;font-weight:600;cursor:pointer}
+.chip[aria-pressed=true]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.count{margin:16px 0 0;color:var(--muted);font-size:.9rem}
+
+.grid{display:grid;gap:20px;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));margin-top:16px;padding-bottom:16px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;min-width:0}
+.card .art{display:block;width:100%;aspect-ratio:400/260;position:relative}
+.art svg{display:block;width:100%;height:100%}
+.tag{position:absolute;left:10px;top:10px;background:var(--surface);color:var(--fg);font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:4px 9px;border-radius:6px}
+.card .body{padding:14px 16px 16px;display:flex;flex-direction:column;gap:6px;flex:1}
+.card h3{font-size:1.25rem}
+.meta{color:var(--muted);font-size:.9rem}
+.facts{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:.85rem;color:var(--muted)}
+.price{margin-top:auto;padding-top:10px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.price strong{font-size:1.15rem;font-variant-numeric:tabular-nums}
+.price small{color:var(--muted);font-size:.78rem;display:block}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:8px;padding:10px 16px;font-weight:700;cursor:pointer}
+.btn:hover{filter:brightness(1.08)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.status{font-size:.78rem;font-weight:700;padding:3px 8px;border-radius:6px;align-self:flex-start}
+.status.free{background:var(--gold-soft);color:var(--fg)}
+.status.busy{background:var(--warn-soft);color:var(--warn)}
+.empty{grid-column:1/-1;border:1px dashed var(--line);border-radius:12px;padding:32px 16px;text-align:center;color:var(--muted)}
+
+.how{padding-block:32px;border-top:1px solid var(--line);display:grid;gap:24px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+.how h2{grid-column:1/-1;font-size:1.6rem}
+.how h3{font-family:var(--font-body);font-weight:700;font-size:1rem;margin-bottom:4px}
+.how p{margin:0;color:var(--muted);font-size:.92rem}
+.vendor{background:var(--fg);color:var(--bg);border-radius:14px;padding:24px;margin-block:8px 32px;display:grid;gap:8px}
+.vendor h2{font-size:1.5rem}
+.vendor p{margin:0;max-width:60ch;opacity:.85}
+footer{padding-block:0 32px;color:var(--muted);font-size:.82rem}
+
+dialog{border:1px solid var(--line);border-radius:14px;padding:0;background:var(--surface);color:var(--fg);width:min(680px,calc(100% - 32px));max-height:calc(100% - 32px);overflow:auto}
+dialog::backdrop{background:rgba(20,8,24,.6)}
+.dlg-art{aspect-ratio:400/260;max-height:240px;width:100%;position:relative;overflow:hidden}
+.dlg-art svg{width:100%;height:100%;display:block}
+.dlg-body{padding:20px;display:grid;gap:16px}
+.dlg-body h2{font-size:1.6rem}
+.dlg-body ul{margin:0;padding-left:20px;color:var(--muted);display:grid;gap:2px}
+.close{position:absolute;right:10px;top:10px;background:var(--surface);border:1px solid var(--line);border-radius:999px;width:36px;height:36px;cursor:pointer;font-size:1.1rem;line-height:1}
+.form{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));border-top:1px solid var(--line);padding-top:16px}
+.form .full{grid-column:1/-1}
+.form h3{grid-column:1/-1;font-family:var(--font-body);font-weight:700;font-size:1.05rem}
+.msg{grid-column:1/-1;border-radius:8px;padding:10px 12px;font-size:.92rem}
+.msg.err{background:var(--warn-soft);color:var(--warn)}
+.msg.ok{background:var(--gold-soft);color:var(--fg)}
+img.cardimg,.dlg-art img.main{display:block;width:100%;height:100%;object-fit:cover}
+.thumbs{position:absolute;left:10px;bottom:10px;display:flex;gap:6px;max-width:calc(100% - 20px);overflow-x:auto}
+.thumbs button{flex:none;width:48px;height:48px;padding:0;border:2px solid var(--surface);border-radius:8px;overflow:hidden;cursor:pointer;background:var(--surface)}
+.thumbs img{width:100%;height:100%;object-fit:cover;display:block}
+@media (prefers-reduced-motion:no-preference){.card{transition:transform .15s}.card:hover{transform:translateY(-3px)}}
+</style>
+
+<div class="bar"><div class="wrap">
+  <div class="brand">Shubh Sajja<small>Wedding decoration &amp; halls</small></div>
+  <nav><a href="#browse">Browse</a><a href="#how">How it works</a><a href="#vendors">For vendors</a><a href="/vendor.html">Vendor login</a></nav>
+</div></div>
+
+<main class="wrap">
+  <section class="hero">
+    <h1>Pick the <em>mandap</em> and the hall, then book both.</h1>
+    <p>See real decoration themes and wedding halls with prices up front. Choose your city, date and guest count, and send an enquiry in one minute.</p>
+    <form class="search" id="search" onsubmit="return false" aria-label="Search">
+      <div class="field"><label for="city">City</label>
+        <select id="city"><option value="">All cities</option></select></div>
+      <div class="field"><label for="date">Wedding date</label>
+        <input type="date" id="date" ></div>
+      <div class="field"><label for="guests">Guests</label>
+        <input type="number" id="guests" min="0" step="50" placeholder="e.g. 500"></div>
+      <div class="field"><label for="budget">Max budget: <span id="budgetOut"></span></label>
+        <input type="range" id="budget" min="25000" max="300000" step="5000" value="300000"></div>
+      <button class="reset" type="button" id="reset">Clear filters</button>
+    </form>
+  </section>
+
+  <section id="browse" aria-label="Browse listings">
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" id="tab-dec" aria-selected="true" data-tab="dec">Decorations<span id="n-dec"></span></button>
+      <button class="tab" role="tab" id="tab-hall" aria-selected="false" data-tab="hall">Marriage halls<span id="n-hall"></span></button>
+    </div>
+    <div class="chips" id="chips" aria-label="Filter by theme"></div>
+    <p class="count" id="count" aria-live="polite"></p>
+    <div class="grid" id="grid"></div>
+  </section>
+
+  <section class="how" id="how">
+    <h2>How booking works</h2>
+    <div><h3>Search</h3><p>Set your city, date, guest count and budget. Halls that are full on your date are marked.</p></div>
+    <div><h3>Compare</h3><p>Open any listing to see what is included, the starting price and the vendor.</p></div>
+    <div><h3>Enquire</h3><p>Send your name, number and date. The vendor calls you back to confirm and take the advance.</p></div>
+  </section>
+
+  <section class="vendor" id="vendors">
+    <h2>Run a decoration business or own a hall?</h2>
+    <p>Create a free vendor account, add your listings and manage enquiries and dates from one place. New vendors are approved before their listings go live.</p>
+    <p><a class="btn" href="/vendor.html" style="display:inline-block;text-decoration:none;background:var(--gold);color:#2b1431">Vendor login or sign up</a></p>
+  </section>
+</main>
+
+<footer class="wrap">Pictures are illustrations. Prices are starting prices and the vendor confirms the final quote.</footer>
+
+<dialog id="dlg" aria-labelledby="dlgTitle">
+  <div class="dlg-art" id="dlgArt"><button class="close" id="dlgClose" aria-label="Close">&times;</button></div>
+  <div class="dlg-body">
+    <div><h2 id="dlgTitle"></h2><div class="meta" id="dlgMeta"></div></div>
+    <div id="dlgStatus"></div>
+    <p id="dlgDesc" style="margin:0"></p>
+    <ul id="dlgList"></ul>
+    <form class="form" id="enq" novalidate>
+      <h3>Send an enquiry</h3>
+      <div class="field"><label for="f-name">Your name</label><input id="f-name" required autocomplete="name"></div>
+      <div class="field"><label for="f-phone">Phone (10 digits)</label><input id="f-phone" inputmode="numeric" maxlength="10" required autocomplete="tel"></div>
+      <div class="field"><label for="f-date">Event date</label><input type="date" id="f-date"  required></div>
+      <div class="field"><label for="f-guests">Guests</label><input type="number" id="f-guests" min="1" step="10"></div>
+      <div class="field full"><label for="f-note">Anything the vendor should know</label><textarea id="f-note" rows="2"></textarea></div>
+      <div class="msg err full" id="f-err" hidden></div>
+      <div class="msg ok full" id="f-ok" hidden></div>
+      <button class="btn full" type="submit" id="f-submit">Send enquiry</button>
+    </form>
+  </div>
+</dialog>
+
+<script>
+let DECOR=[],HALLS=[];
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const inr=n=>'₹'+n.toLocaleString('en-IN');
+const rnd=s=>()=>(s=(s*9301+49297)%233280)/233280;
+
+function cover(it,cls){
+  return it.photos&&it.photos.length?`<img class="${cls||'cardimg'}" src="${esc(it.photos[0].url)}" alt="${esc(it.name)}" loading="lazy">`:art(it);
+}
+function art(it){
+  const [a,b,c]=it.pal, g='g'+it.id, r=rnd(Number(it.id)*37+11);
+  let s=`<svg viewBox="0 0 400 260" preserveAspectRatio="xMidYMid slice" role="img" aria-label="${esc(it.name)} illustration"><defs><linearGradient id="${g}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></linearGradient></defs><rect width="400" height="260" fill="url(#${g})"/>`;
+  s+=`<rect y="205" width="400" height="55" fill="${c}" opacity=".35"/>`;
+  const dots=(n,x0,x1,y0,y1,rad,col)=>{let o='';for(let i=0;i<n;i++){o+=`<circle cx="${x0+r()*(x1-x0)}" cy="${y0+r()*(y1-y0)}" r="${rad*(.6+r()*.8)}" fill="${col}" opacity="${.65+r()*.35}"/>`}return o};
+  if(it.motif==='mandap'){
+    s+=`<path d="M70 70 Q200 10 330 70 L330 85 Q200 30 70 85Z" fill="${c}"/>`;
+    [80,130,270,320].forEach(x=>s+=`<rect x="${x-7}" y="80" width="14" height="125" fill="${c}"/><rect x="${x-11}" y="195" width="22" height="10" fill="${c}"/>`);
+    s+=`<path d="M85 85 Q105 150 130 85 M270 85 Q295 150 315 85" stroke="#fff" stroke-opacity=".7" stroke-width="3" fill="none"/>`;
+    s+=dots(34,70,330,72,100,6,'#ffb703');
+    s+=`<rect x="165" y="160" width="70" height="45" rx="6" fill="#fff" opacity=".85"/><rect x="170" y="150" width="60" height="14" rx="5" fill="${c}" opacity=".8"/>`;
+  }else if(it.motif==='stage'){
+    s+=`<circle cx="200" cy="115" r="82" fill="none" stroke="${c}" stroke-width="14" opacity=".9"/>`;
+    s+=dots(44,118,282,33,197,9,'#fff');
+    s+=`<rect x="60" y="190" width="280" height="22" rx="4" fill="${c}"/><rect x="170" y="150" width="60" height="40" rx="8" fill="#fff" opacity=".9"/>`;
+  }else if(it.motif==='entrance'){
+    s+=`<rect x="90" y="70" width="22" height="140" fill="${c}"/><rect x="288" y="70" width="22" height="140" fill="${c}"/>`;
+    s+=`<path d="M101 80 Q200 -20 299 80" fill="none" stroke="${c}" stroke-width="16"/>`;
+    for(let i=0;i<30;i++){const t=i/29,x=101+t*198,y=80-4*t*(1-t)*50*1.5+0;s+=`<circle cx="${x}" cy="${80-Math.sin(Math.PI*t)*52}" r="${7+r()*5}" fill="${i%3?'#fff':'#ffb703'}"/>`}
+    s+=dots(14,92,110,100,200,6,'#fff')+dots(14,290,308,100,200,6,'#fff');
+  }else if(it.motif==='haldi'){
+    s+=`<rect x="0" y="0" width="400" height="30" fill="${c}" opacity=".5"/>`;
+    for(let i=0;i<14;i++){const x=15+i*28;s+=`<line x1="${x}" y1="0" x2="${x}" y2="${60+r()*90}" stroke="${c}" stroke-width="2"/>`;for(let k=0;k<5;k++)s+=`<circle cx="${x}" cy="${12+k*(10+r()*6)+k*8}" r="${7+r()*3}" fill="${k%2?'#ffd23f':'#ff9f1c'}"/>`}
+    s+=dots(24,40,360,210,250,6,'#ffd23f');
+    s+=`<ellipse cx="200" cy="200" rx="60" ry="14" fill="${c}"/><rect x="170" y="165" width="60" height="35" rx="8" fill="#fff" opacity=".9"/>`;
+  }else if(it.motif==='mehendi'){
+    for(let y=0;y<4;y++)for(let x=0;x<9;x++)s+=`<path d="M${x*48+24} ${y*52+8} l18 18 l-18 18 l-18 -18Z" fill="none" stroke="${c}" stroke-width="2" opacity=".55"/><circle cx="${x*48+24}" cy="${y*52+26}" r="4" fill="${c}" opacity=".6"/>`;
+    s+=`<rect x="60" y="150" width="280" height="55" rx="10" fill="${c}"/>`;
+    [90,150,210,270].forEach((x,i)=>s+=`<ellipse cx="${x+10}" cy="150" rx="26" ry="16" fill="${['#fff','#ffd166','#ef476f','#fff'][i]}" opacity=".9"/>`);
+    s+=`<path d="M50 20 Q200 70 350 20" stroke="#ffd166" stroke-width="3" fill="none"/>`;
+    for(let i=0;i<9;i++){const t=i/8;s+=`<path d="M${50+t*300} ${20+Math.sin(Math.PI*t)*25} v22 a7 7 0 0 0 14 0 v-14Z" fill="#ffd166"/>`}
+  }else if(it.motif==='lights'){
+    for(let k=0;k<4;k++){s+=`<path d="M0 ${40+k*34} Q200 ${100+k*34} 400 ${40+k*34}" stroke="#fff" stroke-opacity=".25" fill="none"/>`;for(let i=0;i<22;i++){const t=i/21;s+=`<circle cx="${t*400}" cy="${40+k*34+Math.sin(Math.PI*t)*30}" r="3.2" fill="${c}"/>`}}
+    s+=dots(30,0,400,10,130,1.8,'#fff');
+    s+=`<rect x="110" y="165" width="180" height="22" rx="3" fill="${c}" opacity=".9"/>`;
+    s+=`<rect x="100" y="120" width="8" height="85" fill="#fff" opacity=".6"/><rect x="292" y="120" width="8" height="85" fill="#fff" opacity=".6"/>`;
+  }else{
+    s+=`<rect x="50" y="85" width="300" height="125" fill="${c}"/><path d="M50 85 L200 35 L350 85Z" fill="${c}" opacity=".85"/>`;
+    s+=`<rect x="185" y="35" width="30" height="20" fill="#fff" opacity=".6"/>`;
+    for(let i=0;i<5;i++){const x=72+i*55;s+=`<path d="M${x} 200 v-55 a16 16 0 0 1 32 0 v55Z" fill="#fff" opacity="${i===2?.95:.65}"/>`}
+    s+=`<rect x="170" y="205" width="60" height="6" fill="#fff" opacity=".7"/>`;
+    s+=dots(10,20,380,215,250,9,a)+`<circle cx="30" cy="190" r="22" fill="${a}" opacity=".9"/><circle cx="372" cy="190" r="22" fill="${a}" opacity=".9"/>`;
+  }
+  return s+'</svg>';
+}
+
+const state={tab:'dec',theme:'',city:'',date:'',guests:'',budget:300000};
+const $=id=>document.getElementById(id);
+const list=()=>state.tab==='dec'?DECOR:HALLS;
+const isBusy=(it,d)=>!!d&&it.busy.includes(d);
+
+function matches(it,ignoreTheme){
+  if(state.city&&it.city!==state.city)return false;
+  if(it.price>state.budget)return false;
+  if(state.tab==='hall'&&state.guests&&it.cap<+state.guests)return false;
+  if(!ignoreTheme&&state.theme&&it.theme!==state.theme)return false;
+  return true;
+}
+function render(){
+  $('budgetOut').textContent=state.budget>=300000?'Any':inr(state.budget);
+  const all=list();
+  const themes=[...new Set(all.map(i=>i.theme))];
+  $('chips').innerHTML=['All',...themes].map(t=>`<button class="chip" aria-pressed="${(t==='All'?'':t)===state.theme}" data-theme="${esc(t==='All'?'':t)}">${esc(t)}</button>`).join('');
+  const shown=all.filter(i=>matches(i));
+  $('n-dec').textContent=DECOR.filter(i=>{const t=state.tab;state.tab='dec';const m=matches(i);state.tab=t;return m}).length;
+  $('n-hall').textContent=HALLS.filter(i=>{const t=state.tab;state.tab='hall';const m=matches(i);state.tab=t;return m}).length;
+  $('count').textContent=`${shown.length} of ${all.length} ${state.tab==='dec'?'decoration themes':'halls'}`+(state.date?` for ${fmtDate(state.date)}`:'');
+  $('grid').innerHTML=shown.length?shown.map(card).join(''):`<div class="empty">Nothing matches these filters. Try a higher budget, another city or fewer guests.</div>`;
+}
+const fmtDate=d=>new Date(d+'T00:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
+function statusPill(it){
+  if(!state.date)return '';
+  return isBusy(it,state.date)?`<span class="status busy">Booked on ${fmtDate(state.date)}</span>`:`<span class="status free">Available on ${fmtDate(state.date)}</span>`;
+}
+function card(it){
+  const hall=state.tab==='hall';
+  const facts=hall?`<div class="facts"><span>Up to ${it.cap.toLocaleString('en-IN')} guests</span><span>${it.rooms} rooms</span><span>${it.ac?'AC':'Non-AC'}</span></div>`:'';
+  return `<article class="card"><div class="art">${cover(it)}<span class="tag">${esc(it.theme)}</span></div><div class="body"><h3>${esc(it.name)}</h3><div class="meta">${esc(it.vendor)}, ${esc(it.city)}</div>${facts}${statusPill(it)}<div class="price"><div><small>${hall?'Per day from':'Starting at'}</small><strong>${inr(it.price)}</strong></div><button class="btn" data-open="${it.id}">View details</button></div></div></article>`;
+}
+
+let current=null;
+function openItem(id){
+  current=[...DECOR,...HALLS].find(i=>String(i.id)===String(id));
+  const hall=current.type==='hall';
+  const dlgArt=$('dlgArt');
+  dlgArt.querySelectorAll('svg,img,.thumbs').forEach(x=>x.remove());
+  dlgArt.insertAdjacentHTML('afterbegin',cover(current,'main'));
+  if(current.photos&&current.photos.length>1)dlgArt.insertAdjacentHTML('beforeend',`<div class="thumbs">${current.photos.map((p,i)=>`<button type="button" data-ph="${i}" aria-label="Show photo ${i+1}"><img src="${esc(p.url)}" alt=""></button>`).join('')}</div>`);
+  $('dlgTitle').textContent=current.name;
+  $('dlgMeta').textContent=`${current.vendor}, ${current.city}  ·  ${hall?'Per day from ':'Starting at '}${inr(current.price)}`+(hall?`  ·  Up to ${current.cap.toLocaleString('en-IN')} guests`:'');
+  $('dlgDesc').textContent=current.desc;
+  $('dlgList').innerHTML=current.inc.map(x=>`<li>${esc(x)}</li>`).join('');
+  $('f-date').value=state.date;
+  $('f-guests').value=state.guests||'';
+  $('f-err').hidden=true;$('f-ok').hidden=true;$('f-submit').disabled=false;
+  updateDlgStatus();
+  $('dlg').showModal();
+}
+function updateDlgStatus(){
+  const d=$('f-date').value;
+  $('dlgStatus').innerHTML=d?(isBusy(current,d)?`<span class="status busy">Booked on ${fmtDate(d)}. Pick another date.</span>`:`<span class="status free">Available on ${fmtDate(d)}</span>`):'';
+}
+$('f-date').addEventListener('input',updateDlgStatus);
+$('enq').addEventListener('submit',async e=>{
+  e.preventDefault();
+  const err=$('f-err'),ok=$('f-ok'),btn=$('f-submit');err.hidden=true;ok.hidden=true;
+  const name=$('f-name').value.trim(),phone=$('f-phone').value.trim(),date=$('f-date').value;
+  let m='';
+  if(!name)m='Enter your name.';
+  else if(!/^[6-9]\d{9}$/.test(phone))m='Enter a valid 10-digit mobile number.';
+  else if(!date)m='Choose your event date.';
+  else if(isBusy(current,date))m=`${current.name} is already booked on ${fmtDate(date)}. Choose another date.`;
+  if(m){err.textContent=m;err.hidden=false;return}
+  btn.disabled=true;btn.textContent='Sending...';
+  try{
+    const r=await fetch('/api/bookings',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({listingId:current.id,name,phone,date,guests:$('f-guests').value,note:$('f-note').value})});
+    const d=await r.json();
+    if(!r.ok){
+      err.textContent=d.error||'Something went wrong. Please try again.';err.hidden=false;
+      if(r.status===409){current.busy.push(date);updateDlgStatus();render()}
+      btn.disabled=false;btn.textContent='Send enquiry';return;
+    }
+    current.busy.push(date);updateDlgStatus();render();
+    ok.textContent=`Thanks ${name.split(' ')[0]}. Your enquiry (reference #${d.id}) for ${current.name} on ${fmtDate(date)} is with the vendor. They will call you on ${phone} to confirm.`;
+    ok.hidden=false;btn.textContent='Enquiry sent';
+  }catch{
+    err.textContent='Could not reach the server. Check your internet and try again.';err.hidden=false;
+    btn.disabled=false;btn.textContent='Send enquiry';
+  }
+});
+$('dlgArt').addEventListener('click',e=>{
+  const b=e.target.closest('[data-ph]');const m=$('dlgArt').querySelector('img.main');
+  if(b&&m)m.src=current.photos[Number(b.dataset.ph)].url;
+});
+$('dlgClose').onclick=()=>$('dlg').close();
+$('dlg').addEventListener('click',e=>{if(e.target===$('dlg'))$('dlg').close()});
+
+document.addEventListener('click',e=>{
+  const t=e.target.closest('[data-tab],[data-theme],[data-open]');
+  if(!t)return;
+  if(t.dataset.open)return openItem(t.dataset.open);
+  if(t.dataset.tab){state.tab=t.dataset.tab;state.theme='';document.querySelectorAll('.tab').forEach(b=>b.setAttribute('aria-selected',b===t));}
+  else state.theme=t.dataset.theme;
+  render();
+});
+$('city').onchange=e=>{state.city=e.target.value;render()};
+$('date').oninput=e=>{state.date=e.target.value;render()};
+$('guests').oninput=e=>{state.guests=e.target.value;if(state.guests&&state.tab==='dec'){}render()};
+$('budget').oninput=e=>{state.budget=+e.target.value;render()};
+$('reset').onclick=()=>{Object.assign(state,{theme:'',city:'',date:'',guests:'',budget:300000});$('city').value='';$('date').value='';$('guests').value='';$('budget').value=300000;render()};
+const todayStr=new Date().toISOString().slice(0,10);
+$('date').min=todayStr;$('f-date').min=todayStr;
+async function load(){
+  $('grid').innerHTML='<div class="empty">Loading listings...</div>';
+  try{
+    const r=await fetch('/api/listings');if(!r.ok)throw 0;
+    const all=await r.json();
+    DECOR=all.filter(i=>i.type==='decor');HALLS=all.filter(i=>i.type==='hall');
+    [...new Set(all.map(i=>i.city))].sort().forEach(c=>$('city').add(new Option(c,c)));
+    render();
+  }catch{
+    $('grid').innerHTML='<div class="empty">Could not load listings. Check that the server is running and refresh the page.</div>';
+  }
+}
+load();
+</script>

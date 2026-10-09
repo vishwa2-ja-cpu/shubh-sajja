@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="data:,">
+<title>Vendor Login | Shubh Sajja</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rozha+One&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#fbf6f7;--surface:#ffffff;--fg:#2b1431;--muted:#6d5a72;--line:#e9dde9;
+  --accent:#b3264f;--accent-fg:#ffffff;--gold:#d99a0b;--gold-soft:#fbefc9;
+  --ok:#1f7a4d;--ok-soft:#dcf3e6;--warn:#a8530b;--warn-soft:#fde8d3;--bad:#a3182f;--bad-soft:#fbdde2;
+  --font-display:"Rozha One",Georgia,serif;
+  --font-body:"Hanken Grotesk",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#1a0e1e;--surface:#27162c;--fg:#f6ecf6;--muted:#b9a5bd;--line:#3d2a43;
+    --accent:#ef6d93;--accent-fg:#2b1431;--gold:#f0b429;--gold-soft:#3b2e0f;
+    --ok:#5fcf97;--ok-soft:#173a29;--warn:#f0a65c;--warn-soft:#3d2a14;--bad:#f28b9b;--bad-soft:#4a1a24;color-scheme:dark;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:16px;line-height:1.5;padding-inline:16px}
+.wrap{max-width:1000px;margin-inline:auto}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+h1,h2{font-family:var(--font-display);font-weight:400;margin:0;line-height:1.15;text-wrap:balance}
+h3{margin:0;font-size:1.05rem}
+.bar{margin-inline:-16px;padding:12px 16px;border-bottom:1px solid var(--line)}
+.bar .wrap{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.brand{font-family:var(--font-display);font-size:1.5rem;color:var(--accent);text-decoration:none}
+.who{display:flex;gap:12px;align-items:center;font-size:.9rem;color:var(--muted)}
+main{padding-block:28px 48px;display:grid;gap:20px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px;display:grid;gap:16px;min-width:0}
+.auth{max-width:440px;margin-inline:auto;width:100%}
+.field{display:flex;flex-direction:column;gap:6px;min-width:0}
+.field label{font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.field input,.field select,.field textarea{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px;width:100%;min-width:0}
+.grid2{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}
+.full{grid-column:1/-1}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:8px;padding:10px 16px;font-weight:700;cursor:pointer}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn.ghost{background:none;color:var(--fg);border:1px solid var(--line)}
+.btn.small{padding:6px 10px;font-size:.85rem}
+.btn.danger{background:var(--bad-soft);color:var(--bad)}
+.btn.good{background:var(--ok-soft);color:var(--ok)}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.tab{background:none;border:0;border-bottom:3px solid transparent;padding:10px 12px;font-weight:700;color:var(--muted);cursor:pointer}
+.tab[aria-selected=true]{color:var(--fg);border-bottom-color:var(--accent)}
+.msg{border-radius:8px;padding:10px 12px;font-size:.92rem}
+.msg.err{background:var(--bad-soft);color:var(--bad)}
+.msg.ok{background:var(--ok-soft);color:var(--ok)}
+.msg.note{background:var(--warn-soft);color:var(--warn)}
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.92rem}
+th,td{text-align:left;padding:10px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
+.pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:.78rem;font-weight:700}
+.pill.pending{background:var(--warn-soft);color:var(--warn)}
+.pill.confirmed{background:var(--ok-soft);color:var(--ok)}
+.pill.rejected,.pill.cancelled{background:var(--bad-soft);color:var(--bad)}
+.pill.blocked{background:var(--line);color:var(--muted)}
+.actions{display:flex;gap:6px;flex-wrap:wrap}
+.empty{color:var(--muted);padding:12px 0}
+.ph{display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.ph img{width:110px;height:80px;object-fit:cover;border-radius:8px;border:1px solid var(--line)}
+.lrow{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;padding:12px 0;border-bottom:1px solid var(--line)}
+.lrow:last-child{border-bottom:0}
+.lrow div{min-width:0}
+.sub{color:var(--muted);font-size:.88rem}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="bar"><div class="wrap">
+  <a class="brand" href="/">Shubh Sajja</a>
+  <div class="who" id="who" hidden><span id="whoName"></span><button class="btn ghost small" id="logout">Sign out</button></div>
+</div></div>
+
+<main class="wrap">
+  <!-- Sign in / sign up -->
+  <section class="panel auth" id="authView">
+    <h1 style="font-size:1.8rem">Vendor area</h1>
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" id="t-login" aria-selected="true">Sign in</button>
+      <button class="tab" role="tab" id="t-reg" aria-selected="false">Create account</button>
+    </div>
+    <form id="loginForm" class="grid2" novalidate>
+      <div class="field full"><label for="l-email">Email</label><input id="l-email" type="email" autocomplete="username" required></div>
+      <div class="field full"><label for="l-pass">Password</label><input id="l-pass" type="password" autocomplete="current-password" required></div>
+      <div class="msg err full" id="l-err" hidden></div>
+      <button class="btn full" type="submit">Sign in</button>
+    </form>
+    <form id="regForm" class="grid2" novalidate hidden>
+      <div class="field full"><label for="r-biz">Business name</label><input id="r-biz" autocomplete="organization" required></div>
+      <div class="field"><label for="r-phone">Mobile (10 digits)</label><input id="r-phone" inputmode="numeric" maxlength="10" autocomplete="tel" required></div>
+      <div class="field"><label for="r-email">Email</label><input id="r-email" type="email" autocomplete="email" required></div>
+      <div class="field full"><label for="r-pass">Password (8 or more characters)</label><input id="r-pass" type="password" autocomplete="new-password" required></div>
+      <div class="msg err full" id="r-err" hidden></div>
+      <button class="btn full" type="submit">Create vendor account</button>
+    </form>
+    <p class="sub" style="margin:0">New accounts are approved by the Shubh Sajja team before listings appear on the website.</p>
+  </section>
+
+  <!-- Signed in -->
+  <section id="appView" hidden>
+    <div class="msg note" id="pendingNote" hidden style="margin-bottom:16px">Your account is waiting for approval. You can add listings now. They appear on the website once we approve you.</div>
+    <div class="panel">
+      <div class="tabs" role="tablist" id="appTabs"></div>
+      <div id="pane"></div>
+    </div>
+  </section>
+</main>
+
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const inr=n=>'₹'+Number(n).toLocaleString('en-IN');
+const fmtDate=d=>new Date(d+'T00:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
+let token='',user=null,tab='';
+try{token=localStorage.getItem('ss_token')||''}catch{}
+const saveToken=t=>{token=t;try{t?localStorage.setItem('ss_token',t):localStorage.removeItem('ss_token')}catch{}};
+
+async function api(path,opts={}){
+  const r=await fetch('/api'+path,{method:opts.method||'GET',headers:{'content-type':'application/json',...(token?{authorization:'Bearer '+token}:{})},body:opts.body?JSON.stringify(opts.body):undefined});
+  let d={};try{d=await r.json()}catch{}
+  if(!r.ok){const e=new Error(d.error||'Something went wrong.');e.status=r.status;throw e}
+  return d;
+}
+
+/* ---------- auth ---------- */
+$('t-login').onclick=()=>{$('t-login').setAttribute('aria-selected',true);$('t-reg').setAttribute('aria-selected',false);$('loginForm').hidden=false;$('regForm').hidden=true};
+$('t-reg').onclick=()=>{$('t-reg').setAttribute('aria-selected',true);$('t-login').setAttribute('aria-selected',false);$('loginForm').hidden=true;$('regForm').hidden=false};
+function showErr(id,m){$(id).textContent=m;$(id).hidden=false}
+$('loginForm').onsubmit=async e=>{
+  e.preventDefault();$('l-err').hidden=true;
+  try{const d=await api('/auth/login',{method:'POST',body:{email:$('l-email').value,password:$('l-pass').value}});saveToken(d.token);user=d.user;start()}
+  catch(x){showErr('l-err',x.message)}
+};
+$('regForm').onsubmit=async e=>{
+  e.preventDefault();$('r-err').hidden=true;
+  try{const d=await api('/auth/register',{method:'POST',body:{businessName:$('r-biz').value,phone:$('r-phone').value,email:$('r-email').value,password:$('r-pass').value}});saveToken(d.token);user=d.user;start()}
+  catch(x){showErr('r-err',x.message)}
+};
+$('logout').onclick=()=>{saveToken('');user=null;$('appView').hidden=true;$('who').hidden=true;$('authView').hidden=false};
+
+async function boot(){
+  if(!token)return;
+  try{user=await api('/me');start()}catch{saveToken('')}
+}
+function start(){
+  $('authView').hidden=true;$('appView').hidden=false;$('who').hidden=false;
+  $('whoName').textContent=user.businessName+(user.role==='admin'?' (admin)':'');
+  $('pendingNote').hidden=user.role==='admin'||user.approved;
+  const tabs=user.role==='admin'?[['vendors','Vendors'],['allbookings','All bookings']]:[['bookings','Bookings'],['listings','My listings'],['dates','Block dates']];
+  $('appTabs').innerHTML=tabs.map(([k,l])=>`<button class="tab" role="tab" data-k="${k}" aria-selected="false">${l}</button>`).join('');
+  $('appTabs').onclick=e=>{const b=e.target.closest('[data-k]');if(b)go(b.dataset.k)};
+  go(tabs[0][0]);
+}
+function go(k){
+  tab=k;
+  document.querySelectorAll('#appTabs .tab').forEach(b=>b.setAttribute('aria-selected',b.dataset.k===k));
+  ({bookings:paneBookings,listings:paneListings,dates:paneDates,vendors:paneVendors,allbookings:paneAll})[k]();
+}
+function fail(x){if(x.status===401){saveToken('');location.reload()}else alert2(x.message)}
+function alert2(m){const el=document.createElement('div');el.className='msg err';el.textContent=m;$('pane').prepend(el);setTimeout(()=>el.remove(),6000)}
+const pill=s=>`<span class="pill ${esc(s)}">${esc(s)}</span>`;
+
+/* ---------- vendor: bookings ---------- */
+async function paneBookings(){
+  $('pane').innerHTML='<p class="empty">Loading...</p>';
+  try{
+    const rows=(await api('/vendor/bookings')).filter(b=>b.status!=='blocked');
+    $('pane').innerHTML=rows.length?`<div class="tablewrap"><table><thead><tr><th>Event date</th><th>Listing</th><th>Customer</th><th>Guests</th><th>Status</th><th></th></tr></thead><tbody>${rows.map(b=>`<tr>
+      <td class="num">${fmtDate(b.event_date)}</td><td>${esc(b.listing_name)}</td>
+      <td>${esc(b.customer_name)}<div class="sub"><a href="tel:${esc(b.phone)}">${esc(b.phone)}</a>${b.email?' · '+esc(b.email):''}</div>${b.note?`<div class="sub">${esc(b.note)}</div>`:''}</td>
+      <td class="num">${b.guests??'-'}</td><td>${pill(b.status)}</td>
+      <td><div class="actions">${b.status==='pending'?`<button class="btn small good" data-s="confirmed" data-id="${b.id}">Confirm</button><button class="btn small danger" data-s="rejected" data-id="${b.id}">Reject</button>`:''}${b.status==='confirmed'?`<button class="btn small danger" data-s="cancelled" data-id="${b.id}">Cancel</button>`:''}</div></td></tr>`).join('')}</tbody></table></div>`:'<p class="empty">No enquiries yet. They appear here when a customer books one of your listings.</p>';
+    $('pane').onclick=async e=>{const b=e.target.closest('[data-s]');if(!b)return;b.disabled=true;
+      try{await api('/vendor/bookings/'+b.dataset.id,{method:'PATCH',body:{status:b.dataset.s}});paneBookings()}catch(x){fail(x);b.disabled=false}};
+  }catch(x){fail(x)}
+}
+
+/* ---------- vendor: listings ---------- */
+const MOTIFS=[['mandap','Mandap'],['stage','Stage'],['entrance','Entrance gate'],['haldi','Haldi'],['mehendi','Mehendi'],['lights','Sangeet lights']];
+async function paneListings(editing){
+  $('pane').innerHTML='<p class="empty">Loading...</p>';
+  try{
+    const ls=await api('/vendor/listings');
+    const e=editing?ls.find(l=>l.id===editing):null;
+    const hall=e?e.type==='hall':false;
+    $('pane').innerHTML=`<div>${ls.length?ls.map(l=>`<div class="lrow"><div><strong>${esc(l.name)}</strong> <span class="sub">${l.type==='hall'?'Hall':'Decoration'} · ${esc(l.city)} · ${esc(l.theme)} · ${inr(l.price)}${l.active?'':' · hidden'}</span></div><div class="row"><button class="btn ghost small" data-edit="${l.id}">Edit</button><button class="btn danger small" data-del="${l.id}">Delete</button></div></div>`).join(''):'<p class="empty">You have no listings yet. Add your first one below.</p>'}</div>
+    <form id="lf" class="grid2" novalidate style="border-top:1px solid var(--line);padding-top:16px">
+      <h3 class="full">${e?'Edit listing':'Add a listing'}</h3>
+      <div class="field"><label for="lf-type">Type</label><select id="lf-type" ${e?'disabled':''}><option value="decor">Decoration</option><option value="hall" ${hall?'selected':''}>Marriage hall</option></select></div>
+      <div class="field"><label for="lf-name">Name</label><input id="lf-name" value="${esc(e?.name)}" required></div>
+      <div class="field"><label for="lf-city">City</label><input id="lf-city" value="${esc(e?.city)}" required></div>
+      <div class="field"><label for="lf-theme">Theme or hall style</label><input id="lf-theme" value="${esc(e?.theme)}" placeholder="Mandap, Stage, Lawn, Banquet" required></div>
+      <div class="field"><label for="lf-price">Starting price in rupees</label><input id="lf-price" type="number" min="0" step="500" value="${e?e.price:''}" required></div>
+      <div class="field" id="lf-motifbox"><label for="lf-motif">Picture style</label><select id="lf-motif">${MOTIFS.map(([v,l])=>`<option value="${v}" ${e?.motif===v?'selected':''}>${l}</option>`).join('')}</select></div>
+      <div class="field hallonly"><label for="lf-cap">Guest capacity</label><input id="lf-cap" type="number" min="1" value="${e?.cap??''}"></div>
+      <div class="field hallonly"><label for="lf-rooms">Rooms</label><input id="lf-rooms" type="number" min="0" value="${e?.rooms??''}"></div>
+      <div class="field hallonly"><label for="lf-park">Parking (cars)</label><input id="lf-park" type="number" min="0" value="${e?.parking??''}"></div>
+      <div class="field hallonly"><label for="lf-ac">Air conditioning</label><select id="lf-ac"><option value="0">No</option><option value="1" ${e?.ac?'selected':''}>Yes</option></select></div>
+      <div class="field full"><label for="lf-desc">Description</label><textarea id="lf-desc" rows="3">${esc(e?.desc)}</textarea></div>
+      <div class="field full"><label for="lf-inc">What is included (one per line)</label><textarea id="lf-inc" rows="4">${esc((e?.inc||[]).join('\n'))}</textarea></div>
+      ${e?`<div class="field full"><label>Photos (JPG, PNG or WebP, up to 3 MB each, 8 per listing)</label>
+        <div class="row" id="ph-list">${(e.photos||[]).map(p=>`<div class="ph"><img src="${esc(p.url)}" alt="Listing photo"><button type="button" class="btn danger small" data-delph="${p.id}" aria-label="Delete photo">Delete</button></div>`).join('')||'<span class="sub">No photos yet. The website shows a drawing until you add one.</span>'}</div>
+        <div class="row"><input id="ph-file" type="file" accept="image/jpeg,image/png,image/webp" multiple><button type="button" class="btn ghost small" id="ph-up">Upload</button></div>
+        <div class="msg err" id="ph-err" hidden></div></div>`:''}
+      ${e?`<div class="field full"><label for="lf-active">Show on the website</label><select id="lf-active"><option value="1">Yes</option><option value="0" ${e.active?'':'selected'}>No, hide it</option></select></div>`:''}
+      <div class="msg err full" id="lf-err" hidden></div>
+      <div class="row full"><button class="btn" type="submit">${e?'Save changes':'Add listing'}</button>${e?'<button class="btn ghost" type="button" id="lf-cancel">Cancel</button>':''}</div>
+    </form>`;
+    const sync=()=>{const h=$('lf-type').value==='hall';document.querySelectorAll('.hallonly').forEach(x=>x.hidden=!h);$('lf-motifbox').hidden=h};
+    $('lf-type').onchange=sync;sync();
+    if(e)$('lf-cancel').onclick=()=>paneListings();
+    if(e){
+      $('ph-up').onclick=async()=>{
+        $('ph-err').hidden=true;const files=$('ph-file').files;
+        if(!files.length)return showErr('ph-err','Choose at least one photo first.');
+        const fd=new FormData();[...files].forEach(f=>fd.append('photos',f));
+        $('ph-up').disabled=true;$('ph-up').textContent='Uploading...';
+        try{
+          const r=await fetch('/api/vendor/listings/'+e.id+'/photos',{method:'POST',headers:{authorization:'Bearer '+token},body:fd});
+          const d=await r.json().catch(()=>({}));
+          if(!r.ok){showErr('ph-err',d.error||'Upload failed.');$('ph-up').disabled=false;$('ph-up').textContent='Upload';return}
+          paneListings(e.id);
+        }catch{showErr('ph-err','Could not reach the server.');$('ph-up').disabled=false;$('ph-up').textContent='Upload'}
+      };
+    }
+    $('pane').onclick=async ev=>{
+      const dp=ev.target.closest('[data-delph]');
+      if(dp){try{await api('/vendor/photos/'+dp.dataset.delph,{method:'DELETE'});paneListings(e.id)}catch(x){fail(x)}return}
+      const ed=ev.target.closest('[data-edit]'),dl=ev.target.closest('[data-del]');
+      if(ed)paneListings(Number(ed.dataset.edit));
+      if(dl){ if(dl.dataset.sure!=='1'){dl.dataset.sure='1';dl.textContent='Click again to delete';return}
+        try{await api('/vendor/listings/'+dl.dataset.del,{method:'DELETE'});paneListings()}catch(x){fail(x)} }
+    };
+    $('lf').onsubmit=async ev=>{
+      ev.preventDefault();$('lf-err').hidden=true;
+      const body={type:$('lf-type').value,name:$('lf-name').value,city:$('lf-city').value,theme:$('lf-theme').value,price:Number($('lf-price').value),
+        description:$('lf-desc').value,includes:$('lf-inc').value.split('\n'),motif:$('lf-motif').value,
+        capacity:$('lf-cap').value,rooms:$('lf-rooms').value,parking:$('lf-park').value,ac:$('lf-ac').value==='1'};
+      if(e)body.active=$('lf-active').value==='1';
+      try{await api(e?'/vendor/listings/'+e.id:'/vendor/listings',{method:e?'PUT':'POST',body});paneListings()}
+      catch(x){if(x.status===401)return fail(x);showErr('lf-err',x.message)}
+    };
+  }catch(x){fail(x)}
+}
+
+/* ---------- vendor: block dates ---------- */
+async function paneDates(){
+  $('pane').innerHTML='<p class="empty">Loading...</p>';
+  try{
+    const [ls,bs]=await Promise.all([api('/vendor/listings'),api('/vendor/bookings')]);
+    const blocked=bs.filter(b=>b.status==='blocked'&&b.event_date>=new Date().toISOString().slice(0,10));
+    $('pane').innerHTML=ls.length?`<p class="sub" style="margin:0">Block a date when you are busy or booked outside this website. Customers will see it as booked.</p>
+    <form id="bf" class="grid2" novalidate>
+      <div class="field"><label for="b-l">Listing</label><select id="b-l">${ls.map(l=>`<option value="${l.id}">${esc(l.name)}</option>`).join('')}</select></div>
+      <div class="field"><label for="b-d">Date</label><input id="b-d" type="date" min="${new Date().toISOString().slice(0,10)}" required></div>
+      <div class="msg err full" id="b-err" hidden></div>
+      <button class="btn full" type="submit">Block this date</button>
+    </form>
+    <div>${blocked.length?blocked.map(b=>`<div class="lrow"><div><strong class="num">${fmtDate(b.event_date)}</strong> <span class="sub">${esc(b.listing_name)}</span></div><button class="btn ghost small" data-unblock="${b.id}">Remove block</button></div>`).join(''):'<p class="empty">No blocked dates.</p>'}</div>`:'<p class="empty">Add a listing first, then you can block dates for it.</p>';
+    if(!ls.length)return;
+    $('bf').onsubmit=async ev=>{ev.preventDefault();$('b-err').hidden=true;
+      try{await api('/vendor/block',{method:'POST',body:{listingId:Number($('b-l').value),date:$('b-d').value}});paneDates()}
+      catch(x){if(x.status===401)return fail(x);showErr('b-err',x.message)}};
+    $('pane').onclick=async ev=>{const u=ev.target.closest('[data-unblock]');if(!u)return;
+      try{await api('/vendor/bookings/'+u.dataset.unblock,{method:'DELETE'});paneDates()}catch(x){fail(x)}};
+  }catch(x){fail(x)}
+}
+
+/* ---------- admin ---------- */
+async function paneVendors(){
+  $('pane').innerHTML='<p class="empty">Loading...</p>';
+  try{
+    const vs=await api('/admin/vendors');
+    $('pane').innerHTML=vs.length?`<div class="tablewrap"><table><thead><tr><th>Business</th><th>Contact</th><th>Joined</th><th>Status</th><th></th></tr></thead><tbody>${vs.map(v=>`<tr><td>${esc(v.business_name)}</td><td>${esc(v.email)}<div class="sub">${esc(v.phone)}</div></td><td class="num">${esc(v.created_at.slice(0,10))}</td><td>${pill(v.approved?'confirmed':'pending').replace('>confirmed<','>approved<')}</td><td><button class="btn small ${v.approved?'danger':'good'}" data-ap="${v.id}" data-to="${v.approved?0:1}">${v.approved?'Suspend':'Approve'}</button></td></tr>`).join('')}</tbody></table></div>`:'<p class="empty">No vendors yet.</p>';
+    $('pane').onclick=async e=>{const b=e.target.closest('[data-ap]');if(!b)return;
+      try{await api('/admin/vendors/'+b.dataset.ap,{method:'PATCH',body:{approved:b.dataset.to==='1'}});paneVendors()}catch(x){fail(x)}};
+  }catch(x){fail(x)}
+}
+async function paneAll(){
+  $('pane').innerHTML='<p class="empty">Loading...</p>';
+  try{
+    const rows=await api('/admin/bookings');
+    $('pane').onclick=null;
+    $('pane').innerHTML=rows.length?`<div class="tablewrap"><table><thead><tr><th>#</th><th>Event date</th><th>Listing</th><th>Vendor</th><th>Customer</th><th>Status</th></tr></thead><tbody>${rows.map(b=>`<tr><td class="num">${b.id}</td><td class="num">${fmtDate(b.event_date)}</td><td>${esc(b.listing_name)}</td><td>${esc(b.business_name)}</td><td>${esc(b.customer_name)}<div class="sub">${esc(b.phone)}</div></td><td>${pill(b.status)}</td></tr>`).join('')}</tbody></table></div>`:'<p class="empty">No bookings yet.</p>';
+  }catch(x){fail(x)}
+}
+boot();
+</script>
+</body>
+</html>

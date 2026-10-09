@@ -1,0 +1,19 @@
+{
+  "name": "shubh-sajja",
+  "version": "1.0.0",
+  "description": "Wedding decoration and marriage hall booking platform",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "multer": "^2.4.0",
+    "nodemailer": "^10.0.16"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
