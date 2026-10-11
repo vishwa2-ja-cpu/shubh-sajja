@@ -1,8 +1,19 @@
+// Uses the SQLite that is built into Node 22.13 or newer, so nothing needs to be compiled.
 const { DatabaseSync } = require('node:sqlite');
 const bcrypt = require('bcryptjs');
 const path = require('path');
+const fs = require('fs');
 
-const db = new DatabaseSync(process.env.DB_FILE || path.join(__dirname, 'shubh.db'));
+// When the site runs on a host (Render sets RENDER), it must not start with the weak test admin password.
+const isOnline = process.env.NODE_ENV === 'production' || !!process.env.RENDER;
+if (isOnline && (process.env.ADMIN_PASSWORD || '').length < 10) {
+  console.error('Stopped: set the ADMIN_PASSWORD setting to a strong password of at least 10 characters.');
+  process.exit(1);
+}
+
+const dataDir = process.env.DATA_DIR || __dirname;
+fs.mkdirSync(dataDir, { recursive: true });
+const db = new DatabaseSync(process.env.DB_FILE || path.join(dataDir, 'shubh.db'));
 db.exec('PRAGMA journal_mode = WAL');
 db.exec('PRAGMA foreign_keys = ON');
 
@@ -64,9 +75,10 @@ CREATE INDEX IF NOT EXISTS idx_listings_city ON listings(city);
 function seed() {
   if (db.prepare('SELECT COUNT(*) c FROM users').get().c > 0) return;
   const adminPass = process.env.ADMIN_PASSWORD || 'admin12345';
-  const vendorPass = 'vendor12345';
+  const vendorPass = process.env.SAMPLE_VENDOR_PASSWORD || 'vendor12345';
   const addUser = db.prepare('INSERT INTO users (email,password_hash,role,business_name,phone,approved) VALUES (?,?,?,?,?,1)');
   addUser.run('admin@shubhsajja.local', bcrypt.hashSync(adminPass, 10), 'admin', 'Shubh Sajja Admin', '');
+  if (process.env.SEED_SAMPLE === '0') return; // real launch: start with the admin only, no sample vendors or listings
   const v = (email, name, phone) => addUser.run(email, bcrypt.hashSync(vendorPass, 10), 'vendor', name, phone).lastInsertRowid;
   const v1 = v('saptarang@example.com', 'Saptarang Decorators', '9800000001');
   const v2 = v('hall.owner@example.com', 'Laxmi Hospitality', '9800000002');

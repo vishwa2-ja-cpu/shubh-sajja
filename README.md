@@ -4,7 +4,7 @@ A website where people browse wedding decoration themes and marriage halls, chec
 
 ## Run it on your computer
 
-1. Install Node.js 18 or newer from https://nodejs.org
+1. Install Node.js 22.13 or newer (the current LTS) from https://nodejs.org
 2. Open a terminal in this folder and run:
 
 ```
@@ -35,6 +35,34 @@ Vendors sign in at http://localhost:3000/vendor.html. New vendors must be approv
 - `UPLOAD_DIR`: folder where listing photos are saved, default `uploads`
 - `BASE_URL`: your website address, used in links inside emails, default `http://localhost:3000`
 - `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM`: email sending settings (see below)
+- `DATA_DIR`: one folder for the database and the `uploads` folder, default is the project folder
+- `SEED_SAMPLE`: set to `0` to start with only the admin account and no sample vendors or listings
+- `SAMPLE_VENDOR_PASSWORD`: password of the sample vendors, default `vendor12345`
+
+## Put it online (Render)
+
+1. Push this project to GitHub.
+2. On https://render.com click **New**, then **Web Service**, and connect your GitHub repository.
+3. Use these settings:
+   - **Runtime**: Node
+   - **Build Command**: `npm install`
+   - **Start Command**: `npm start`
+   - **Instance Type**: Free
+   - **Health Check Path** (under Advanced): `/healthz`
+4. Add these environment variables:
+
+| Name | Value |
+|------|-------|
+| `NODE_VERSION` | `22` |
+| `ADMIN_PASSWORD` | a strong password you choose, 10 or more characters |
+| `JWT_SECRET` | a long random text, 32 or more characters (create one with `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`) |
+| `BASE_URL` | your site address, for example `https://shubh-sajja.onrender.com` (add it after the first deploy) |
+
+5. Click **Create Web Service**. After a few minutes your site is live at the address Render shows.
+
+The site refuses to start online without `ADMIN_PASSWORD` and `JWT_SECRET`, so the weak test passwords can never go live by mistake.
+
+**Free plan limits:** the site goes to sleep after 15 minutes without visitors, so the first page load can take about a minute. The database and uploaded photos are also reset when the site restarts or you deploy again, and the sample data comes back. This is fine for a demo. For real customers, add a persistent disk on a paid plan, set `DATA_DIR` to the disk's path, and set `SEED_SAMPLE=0`.
 
 ## Email alerts
 
@@ -55,7 +83,7 @@ On Mac or Linux, use `export` instead of `set`. A failed email never stops a boo
 
 ## Photos
 
-Vendors open My listings, click Edit on a listing, and upload JPG, PNG or WebP photos (3 MB each, 8 per listing). The first photo becomes the cover on the website. Without photos, the website shows a drawing. Photos are saved in the `uploads` folder, so back it up together with `shubh.db`.
+Vendors open My listings, click Edit on a listing, and upload JPG, PNG or WebP photos (10 MB each, 8 per listing). The first photo becomes the cover on the website. Without photos, the website shows a drawing. Photos are saved in the `uploads` folder, so back it up together with `shubh.db`.
 
 ## How booking works
 

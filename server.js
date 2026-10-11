@@ -8,15 +8,21 @@ const multer = require('multer');
 const db = require('./db');
 const { sendMail } = require('./mailer');
 
-const UPLOAD_DIR = process.env.UPLOAD_DIR || path.join(__dirname, 'uploads');
+const isOnline = process.env.NODE_ENV === 'production' || !!process.env.RENDER;
+const UPLOAD_DIR = process.env.UPLOAD_DIR || path.join(process.env.DATA_DIR || __dirname, 'uploads');
 fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 const BASE_URL = (process.env.BASE_URL || 'http://localhost:' + (process.env.PORT || 3000)).replace(/\/$/, '');
 const MAX_PHOTOS = 8;
 
 const app = express();
+if (isOnline) app.set('trust proxy', 1); // behind the host's proxy, so the real visitor IP is used for rate limits
 app.use(express.json({ limit: '50kb' }));
 
 let SECRET = process.env.JWT_SECRET;
+if (!SECRET && isOnline) {
+  console.error('Stopped: set the JWT_SECRET setting to a long random text (at least 32 characters).');
+  process.exit(1);
+}
 if (!SECRET) {
   SECRET = crypto.randomBytes(32).toString('hex');
   console.warn('JWT_SECRET is not set. Using a temporary one, so vendors are signed out on every restart.');
@@ -210,7 +216,7 @@ app.delete('/api/vendor/listings/:id', vendor, (req, res) => {
 });
 
 // ---------- photos ----------
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 16 * 1024 * 1024, files: 5 } });
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024, files: 5 } });
 function imageType(buf) {
   if (buf.length > 12 && buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff) return '.jpg';
   if (buf.length > 12 && buf.slice(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))) return '.png';
@@ -220,7 +226,7 @@ function imageType(buf) {
 app.post('/api/vendor/listings/:id/photos', vendor, (req, res) => {
   const l = ownListing(req, res); if (!l) return;
   upload.array('photos', 5)(req, res, (err) => {
-    if (err) return bad(res, err.code === 'LIMIT_FILE_SIZE' ? 'Each photo must be 3 MB or smaller.' : 'Could not read the upload. Send up to 5 photos.');
+    if (err) return bad(res, err.code === 'LIMIT_FILE_SIZE' ? 'Each photo must be 10 MB or smaller.' : 'Could not read the upload. Send up to 5 photos.');
     const files = req.files || [];
     if (!files.length) return bad(res, 'Choose at least one photo.');
     const have = db.prepare('SELECT COUNT(*) c FROM listing_photos WHERE listing_id=?').get(l.id).c;
@@ -301,6 +307,7 @@ app.get('/api/admin/bookings', admin, (req, res) => {
     JOIN listings l ON l.id=b.listing_id JOIN users u ON u.id=l.vendor_id WHERE b.status!='blocked' ORDER BY b.id DESC LIMIT 200`).all());
 });
 
+app.get('/healthz', (req, res) => res.type('text').send('ok'));
 app.use('/api', (req, res) => bad(res, 'Not found.', 404));
 app.use('/uploads', express.static(UPLOAD_DIR, { maxAge: '7d', setHeaders: (res) => res.setHeader('X-Content-Type-Options', 'nosniff') }));
 app.use(express.static(path.join(__dirname, 'public')));
