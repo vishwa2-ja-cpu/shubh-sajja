@@ -67,6 +67,9 @@ td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
 .pill.blocked{background:var(--line);color:var(--muted)}
 .actions{display:flex;gap:6px;flex-wrap:wrap}
 .empty{color:var(--muted);padding:12px 0}
+.badge{display:inline-block;background:var(--accent);color:var(--accent-fg);border-radius:999px;padding:0 8px;font-size:.78rem;line-height:1.5;margin-left:6px;font-weight:700}
+tr.rowpending td{background:var(--warn-soft)}
+.waiting{margin:0 0 12px;font-weight:700}
 .ph{display:flex;flex-direction:column;gap:6px;align-items:flex-start}
 .ph img{width:110px;height:80px;object-fit:cover;border-radius:8px;border:1px solid var(--line)}
 .lrow{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;padding:12px 0;border-bottom:1px solid var(--line)}
@@ -148,7 +151,7 @@ $('regForm').onsubmit=async e=>{
   try{const d=await api('/auth/register',{method:'POST',body:{businessName:$('r-biz').value,phone:$('r-phone').value,email:$('r-email').value,password:$('r-pass').value}});saveToken(d.token);user=d.user;start()}
   catch(x){showErr('r-err',x.message)}
 };
-$('logout').onclick=()=>{saveToken('');user=null;$('appView').hidden=true;$('who').hidden=true;$('authView').hidden=false};
+$('logout').onclick=()=>{saveToken('');user=null;document.title='Vendor Login | Shubh Sajja';$('appView').hidden=true;$('who').hidden=true;$('authView').hidden=false};
 
 async function boot(){
   if(!token)return;
@@ -162,6 +165,18 @@ function start(){
   $('appTabs').innerHTML=tabs.map(([k,l])=>`<button class="tab" role="tab" data-k="${k}" aria-selected="false">${l}</button>`).join('');
   $('appTabs').onclick=e=>{const b=e.target.closest('[data-k]');if(b)go(b.dataset.k)};
   go(tabs[0][0]);
+  if(user.role==='vendor'){refreshBadge();if(!pollStarted){pollStarted=true;setInterval(refreshBadge,30000)}}
+}
+let waitingCount=0,pollStarted=false;
+function setBadge(n){
+  waitingCount=n;
+  const b=document.querySelector('#appTabs [data-k=bookings]');
+  if(b)b.innerHTML='Bookings'+(n?` <span class="badge" aria-label="${n} waiting">${n}</span>`:'');
+  document.title=(n?`(${n}) `:'')+'Vendor Login | Shubh Sajja';
+}
+async function refreshBadge(){
+  if(!user||user.role!=='vendor'||document.hidden)return;
+  try{const rows=await api('/vendor/bookings');setBadge(rows.filter(b=>b.status==='pending').length)}catch{}
 }
 function go(k){
   tab=k;
@@ -170,14 +185,32 @@ function go(k){
 }
 function fail(x){if(x.status===401){saveToken('');location.reload()}else alert2(x.message)}
 function alert2(m){const el=document.createElement('div');el.className='msg err';el.textContent=m;$('pane').prepend(el);setTimeout(()=>el.remove(),6000)}
+// Shrinks a photo to at most 1600 px on the long side as a JPEG. Falls back to the original file on any problem.
+async function shrink(file){
+  try{
+    if(!/^image\/(jpeg|png|webp)$/.test(file.type))return file;
+    const bmp=await createImageBitmap(file,{imageOrientation:'from-image'});
+    const max=1600,scale=Math.min(1,max/Math.max(bmp.width,bmp.height));
+    if(scale===1&&file.size<1500000){bmp.close&&bmp.close();return file}
+    const c=document.createElement('canvas');c.width=Math.round(bmp.width*scale);c.height=Math.round(bmp.height*scale);
+    const g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,c.width,c.height);g.drawImage(bmp,0,0,c.width,c.height);
+    bmp.close&&bmp.close();
+    const blob=await new Promise(r=>c.toBlob(r,'image/jpeg',0.85));
+    if(!blob||(blob.size>=file.size&&scale===1))return file;
+    return new File([blob],file.name.replace(/\.[^.]+$/,'')+'.jpg',{type:'image/jpeg'});
+  }catch{return file}
+}
 const pill=s=>`<span class="pill ${esc(s)}">${esc(s)}</span>`;
 
 /* ---------- vendor: bookings ---------- */
 async function paneBookings(){
   $('pane').innerHTML='<p class="empty">Loading...</p>';
   try{
-    const rows=(await api('/vendor/bookings')).filter(b=>b.status!=='blocked');
-    $('pane').innerHTML=rows.length?`<div class="tablewrap"><table><thead><tr><th>Event date</th><th>Listing</th><th>Customer</th><th>Guests</th><th>Status</th><th></th></tr></thead><tbody>${rows.map(b=>`<tr>
+    const rows=(await api('/vendor/bookings')).filter(b=>b.status!=='blocked')
+      .sort((a,b)=>(a.status==='pending'?0:1)-(b.status==='pending'?0:1)||a.event_date.localeCompare(b.event_date));
+    const waiting=rows.filter(b=>b.status==='pending').length;
+    setBadge(waiting);
+    $('pane').innerHTML=rows.length?`${waiting?`<p class="waiting">${waiting} enquir${waiting===1?'y is':'ies are'} waiting for your answer. Call the customer, then confirm or reject.</p>`:'<p class="sub" style="margin:0 0 12px">No enquiries are waiting for your answer.</p>'}<div class="tablewrap"><table><thead><tr><th>Event date</th><th>Listing</th><th>Customer</th><th>Guests</th><th>Status</th><th></th></tr></thead><tbody>${rows.map(b=>`<tr class="${b.status==='pending'?'rowpending':''}">
       <td class="num">${fmtDate(b.event_date)}</td><td>${esc(b.listing_name)}</td>
       <td>${esc(b.customer_name)}<div class="sub"><a href="tel:${esc(b.phone)}">${esc(b.phone)}</a>${b.email?' · '+esc(b.email):''}</div>${b.note?`<div class="sub">${esc(b.note)}</div>`:''}</td>
       <td class="num">${b.guests??'-'}</td><td>${pill(b.status)}</td>
@@ -210,11 +243,12 @@ async function paneListings(editing){
       <div class="field hallonly"><label for="lf-ac">Air conditioning</label><select id="lf-ac"><option value="0">No</option><option value="1" ${e?.ac?'selected':''}>Yes</option></select></div>
       <div class="field full"><label for="lf-desc">Description</label><textarea id="lf-desc" rows="3">${esc(e?.desc)}</textarea></div>
       <div class="field full"><label for="lf-inc">What is included (one per line)</label><textarea id="lf-inc" rows="4">${esc((e?.inc||[]).join('\n'))}</textarea></div>
-      ${e?`<div class="field full"><label>Photos (JPG, PNG or WebP, up to 3 MB each, 8 per listing)</label>
+      ${e?`<div class="field full"><label>Photos (JPG, PNG or WebP, 8 per listing). Large photos are shrunk automatically.</label>
         <div class="row" id="ph-list">${(e.photos||[]).map(p=>`<div class="ph"><img src="${esc(p.url)}" alt="Listing photo"><button type="button" class="btn danger small" data-delph="${p.id}" aria-label="Delete photo">Delete</button></div>`).join('')||'<span class="sub">No photos yet. The website shows a drawing until you add one.</span>'}</div>
         <div class="row"><input id="ph-file" type="file" accept="image/jpeg,image/png,image/webp" multiple><button type="button" class="btn ghost small" id="ph-up">Upload</button></div>
         <div class="msg err" id="ph-err" hidden></div></div>`:''}
       ${e?`<div class="field full"><label for="lf-active">Show on the website</label><select id="lf-active"><option value="1">Yes</option><option value="0" ${e.active?'':'selected'}>No, hide it</option></select></div>`:''}
+      ${e?'':'<p class="sub full" style="margin:0">To add photos, save the listing first, then click Edit on it.</p>'}
       <div class="msg err full" id="lf-err" hidden></div>
       <div class="row full"><button class="btn" type="submit">${e?'Save changes':'Add listing'}</button>${e?'<button class="btn ghost" type="button" id="lf-cancel">Cancel</button>':''}</div>
     </form>`;
@@ -225,8 +259,10 @@ async function paneListings(editing){
       $('ph-up').onclick=async()=>{
         $('ph-err').hidden=true;const files=$('ph-file').files;
         if(!files.length)return showErr('ph-err','Choose at least one photo first.');
-        const fd=new FormData();[...files].forEach(f=>fd.append('photos',f));
-        $('ph-up').disabled=true;$('ph-up').textContent='Uploading...';
+        $('ph-up').disabled=true;$('ph-up').textContent='Preparing photos...';
+        const fd=new FormData();
+        for(const f of files){const s=await shrink(f);fd.append('photos',s,s.name||f.name)}
+        $('ph-up').textContent='Uploading...';
         try{
           const r=await fetch('/api/vendor/listings/'+e.id+'/photos',{method:'POST',headers:{authorization:'Bearer '+token},body:fd});
           const d=await r.json().catch(()=>({}));
