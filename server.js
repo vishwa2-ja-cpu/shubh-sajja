@@ -7,6 +7,7 @@ const fs = require('fs');
 const multer = require('multer');
 const db = require('./db');
 const { sendMail } = require('./mailer');
+const { plan: planWithAI, aiEnabled } = require('./ai');
 
 const isOnline = process.env.NODE_ENV === 'production' || !!process.env.RENDER;
 const UPLOAD_DIR = process.env.UPLOAD_DIR || path.join(process.env.DATA_DIR || __dirname, 'uploads');
@@ -112,6 +113,21 @@ app.post('/api/bookings', limit(10), (req, res) => {
   } catch (e) {
     if (String(e.message).includes('UNIQUE')) return bad(res, `${l.name} is already booked on that date. Choose another date.`, 409);
     console.error(e); bad(res, 'Something went wrong. Please try again.', 500);
+  }
+});
+
+// ---------- AI Smart Planner ----------
+// The AI only reads the request and writes the summary. Matching uses the real listings (see ai.js).
+app.get('/api/ai/status', (req, res) => res.json({ ai: aiEnabled }));
+app.post('/api/ai/plan', limit(6), async (req, res) => {
+  const text = clean(req.body && req.body.text, 500);
+  if (text.length < 5) return bad(res, 'Tell me a little more, for example: wedding in Pune, 300 guests, budget 2 lakh.');
+  try {
+    const rows = db.prepare(PUBLIC_LISTING_SQL).all();
+    const listings = rows.map((r) => shapeListing(r, busyDates(r.id)));
+    res.json(await planWithAI(text, listings));
+  } catch (e) {
+    console.error(e); bad(res, 'The planner had a problem. Please try again.', 500);
   }
 });
 

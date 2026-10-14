@@ -1,8 +1,18 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="data:,">
 <title>Shubh Sajja</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Rozha+One&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
+:root{color-scheme:light}
+body{margin:0}
+img{max-width:100%}
+[hidden]{display:none!important}
 /* Layout: sticky bar, hero with search panel, tabbed card grid, details dialog with booking form */
 :root{
   --bg:#fbf6f7;
@@ -117,9 +127,28 @@ img.cardimg,.dlg-art img.main{display:block;width:100%;height:100%;object-fit:co
 .thumbs{position:absolute;left:10px;bottom:10px;display:flex;gap:6px;max-width:calc(100% - 20px);overflow-x:auto}
 .thumbs button{flex:none;width:48px;height:48px;padding:0;border:2px solid var(--surface);border-radius:8px;overflow:hidden;cursor:pointer;background:var(--surface)}
 .thumbs img{width:100%;height:100%;object-fit:cover;display:block}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.ai{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px;display:grid;gap:12px;margin-top:8px}
+.ai h2{font-size:1.5rem;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.aibadge{font-family:var(--font-body);font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;background:var(--gold-soft);color:var(--fg);padding:3px 8px;border-radius:6px}
+.aihelp{margin:0;color:var(--muted);max-width:62ch}
+.aiform{display:grid;gap:10px;grid-template-columns:1fr auto;align-items:stretch}
+.aiform textarea{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px;resize:vertical;min-width:0;width:100%}
+.aiex{display:flex;gap:8px;flex-wrap:wrap}
+.aiex button{border:1px solid var(--line);background:var(--bg);border-radius:999px;padding:5px 12px;font-size:.82rem;cursor:pointer;text-align:left}
+.aiex button:hover{border-color:var(--accent);color:var(--accent)}
+.aisum{background:var(--gold-soft);border-radius:10px;padding:12px 14px;margin:4px 0 0}
+.aisum p{margin:0}
+.aisum small{display:block;color:var(--muted);margin-top:6px}
+.aigroup h3{font-family:var(--font-body);font-weight:700;font-size:1rem;margin:16px 0 0}
+.why{display:flex;flex-wrap:wrap;gap:4px 6px}
+.why span{font-size:.75rem;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:2px 7px;color:var(--muted)}
+.why span.warn{background:var(--warn-soft);color:var(--warn);border-color:transparent}
+@media (max-width:560px){.aiform{grid-template-columns:1fr}}
 @media (prefers-reduced-motion:no-preference){.card{transition:transform .15s}.card:hover{transform:translateY(-3px)}}
 </style>
-
+</head>
+<body>
 <div class="bar"><div class="wrap">
   <div class="brand">Shubh Sajja<small>Wedding decoration &amp; halls</small></div>
   <nav><a href="#browse">Browse</a><a href="#how">How it works</a><a href="#vendors">For vendors</a><a href="/vendor.html">Vendor login</a></nav>
@@ -140,6 +169,19 @@ img.cardimg,.dlg-art img.main{display:block;width:100%;height:100%;object-fit:co
         <input type="range" id="budget" min="25000" max="300000" step="5000" value="300000"></div>
       <button class="reset" type="button" id="reset">Clear filters</button>
     </form>
+  </section>
+
+  <section class="ai" id="planner" aria-labelledby="aiTitle">
+    <h2 id="aiTitle">Plan with AI <span class="aibadge" id="aiBadge" hidden>AI on</span></h2>
+    <p class="aihelp">Tell us about your wedding in your own words. We will suggest halls and decoration that fit your city, date, guests and budget.</p>
+    <form id="aiForm" class="aiform">
+      <label for="aiText" class="sr">Describe your wedding</label>
+      <textarea id="aiText" rows="2" maxlength="500" placeholder="Example: Wedding in Pune on 15 December, around 400 guests, total budget 3 lakh. Need a hall and a mandap."></textarea>
+      <button class="btn" type="submit" id="aiGo">Suggest for me</button>
+    </form>
+    <div class="aiex" id="aiEx" aria-label="Examples"></div>
+    <div class="msg err" id="aiErr" hidden></div>
+    <div id="aiOut" aria-live="polite"></div>
   </section>
 
   <section id="browse" aria-label="Browse listings">
@@ -265,17 +307,17 @@ function render(){
   $('n-dec').textContent=DECOR.filter(i=>{const t=state.tab;state.tab='dec';const m=matches(i);state.tab=t;return m}).length;
   $('n-hall').textContent=HALLS.filter(i=>{const t=state.tab;state.tab='hall';const m=matches(i);state.tab=t;return m}).length;
   $('count').textContent=`${shown.length} of ${all.length} ${state.tab==='dec'?'decoration themes':'halls'}`+(state.date?` for ${fmtDate(state.date)}`:'');
-  $('grid').innerHTML=shown.length?shown.map(card).join(''):`<div class="empty">Nothing matches these filters. Try a higher budget, another city or fewer guests.</div>`;
+  $('grid').innerHTML=shown.length?shown.map(i=>card(i)).join(''):`<div class="empty">Nothing matches these filters. Try a higher budget, another city or fewer guests.</div>`;
 }
 const fmtDate=d=>new Date(d+'T00:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
 function statusPill(it){
   if(!state.date)return '';
   return isBusy(it,state.date)?`<span class="status busy">Booked on ${fmtDate(state.date)}</span>`:`<span class="status free">Available on ${fmtDate(state.date)}</span>`;
 }
-function card(it){
-  const hall=state.tab==='hall';
+function card(it,forceHall,extra){
+  const hall=forceHall??(state.tab==='hall');
   const facts=hall?`<div class="facts"><span>Up to ${it.cap.toLocaleString('en-IN')} guests</span><span>${it.rooms} rooms</span><span>${it.ac?'AC':'Non-AC'}</span></div>`:'';
-  return `<article class="card"><div class="art">${cover(it)}<span class="tag">${esc(it.theme)}</span></div><div class="body"><h3>${esc(it.name)}</h3><div class="meta">${esc(it.vendor)}, ${esc(it.city)}</div>${facts}${statusPill(it)}<div class="price"><div><small>${hall?'Per day from':'Starting at'}</small><strong>${inr(it.price)}</strong></div><button class="btn" data-open="${it.id}">View details</button></div></div></article>`;
+  return `<article class="card"><div class="art">${cover(it)}<span class="tag">${esc(it.theme)}</span></div><div class="body"><h3>${esc(it.name)}</h3><div class="meta">${esc(it.vendor)}, ${esc(it.city)}</div>${facts}${extra||''}${statusPill(it)}<div class="price"><div><small>${hall?'Per day from':'Starting at'}</small><strong>${inr(it.price)}</strong></div><button class="btn" data-open="${it.id}">View details</button></div></div></article>`;
 }
 
 let current=null;
@@ -348,6 +390,44 @@ $('date').oninput=e=>{state.date=e.target.value;render()};
 $('guests').oninput=e=>{state.guests=e.target.value;if(state.guests&&state.tab==='dec'){}render()};
 $('budget').oninput=e=>{state.budget=+e.target.value;render()};
 $('reset').onclick=()=>{Object.assign(state,{theme:'',city:'',date:'',guests:'',budget:300000});$('city').value='';$('date').value='';$('guests').value='';$('budget').value=300000;render()};
+// ---------- AI Smart Planner ----------
+const EXAMPLES=[
+  'Wedding in Pune, 400 guests, 15 December, budget 3 lakh. Need hall and mandap.',
+  'Small traditional wedding in Nashik, 300 guests, budget 2.5 lakh',
+  'Haldi and mehendi decoration in Pune under 80 thousand'
+];
+$('aiEx').innerHTML=EXAMPLES.map((t,i)=>`<button type="button" data-ex="${i}">${esc(t)}</button>`).join('');
+$('aiEx').addEventListener('click',e=>{const b=e.target.closest('[data-ex]');if(b){$('aiText').value=EXAMPLES[b.dataset.ex];$('aiText').focus()}});
+fetch('/api/ai/status').then(r=>r.json()).then(s=>{$('aiBadge').hidden=!s.ai}).catch(()=>{});
+const byId=id=>[...DECOR,...HALLS].find(i=>String(i.id)===String(id));
+function aiGroup(title,picks,hall){
+  const items=picks.map(p=>{const it=byId(p.id);if(!it)return '';
+    const why=`<div class="why">${p.reasons.map(r=>`<span>${esc(r)}</span>`).join('')}${p.notes.map(n=>`<span class="warn">${esc(n)}</span>`).join('')}</div>`;
+    return card(it,hall,why)}).join('');
+  return items?`<div class="aigroup"><h3>${esc(title)}</h3><div class="grid">${items}</div></div>`:'';
+}
+$('aiForm').addEventListener('submit',async e=>{
+  e.preventDefault();
+  const text=$('aiText').value.trim(),err=$('aiErr'),btn=$('aiGo'),out=$('aiOut');
+  err.hidden=true;
+  if(text.length<5){err.textContent='Tell us a little more, for example: wedding in Pune, 300 guests, budget 2 lakh.';err.hidden=false;return}
+  btn.disabled=true;btn.textContent='Thinking...';out.innerHTML='';
+  try{
+    const r=await fetch('/api/ai/plan',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({text})});
+    const d=await r.json();
+    if(!r.ok){err.textContent=d.error||'Something went wrong. Please try again.';err.hidden=false;return}
+    const u=d.understood;
+    if(u.date){state.date=u.date;$('date').value=u.date}
+    if(u.guests){state.guests=String(u.guests);$('guests').value=u.guests}
+    render();
+    const read=[u.city,u.date&&fmtDate(u.date),u.guests&&`${u.guests.toLocaleString('en-IN')} guests`,u.budget&&`budget ${inr(u.budget)}`].filter(Boolean);
+    out.innerHTML=`<div class="aisum"><p>${esc(d.summary)}</p><small>${read.length?'We understood: '+esc(read.join(' · '))+'. ':''}${d.mode==='ai'?'Suggestions are matched from real listings; check details before you book.':'Basic matching is on right now. Suggestions are matched from real listings.'}</small></div>`
+      +aiGroup('Marriage halls',d.halls,true)+aiGroup('Decoration',d.decor,false);
+  }catch{
+    err.textContent='Could not reach the server. Check your internet and try again.';err.hidden=false;
+  }finally{btn.disabled=false;btn.textContent='Suggest for me'}
+});
+
 const todayStr=new Date().toISOString().slice(0,10);
 $('date').min=todayStr;$('f-date').min=todayStr;
 async function load(){
@@ -364,3 +444,5 @@ async function load(){
 }
 load();
 </script>
+</body>
+</html>

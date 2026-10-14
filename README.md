@@ -34,6 +34,8 @@ Vendors sign in at http://localhost:3000/vendor.html. New vendors must be approv
 - `DB_FILE`: path of the database file
 - `UPLOAD_DIR`: folder where listing photos are saved, default `uploads`
 - `BASE_URL`: your website address, used in links inside emails, default `http://localhost:3000`
+- `ANTHROPIC_API_KEY`: turns on the AI Smart Planner (see below). Without it the planner still works with simple built-in matching
+- `AI_MODEL` (default `claude-haiku-4-5-20251001`) and `AI_DAILY_LIMIT` (default 200 AI calls per day for the whole site)
 - `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM`: email sending settings (see below)
 - `DATA_DIR`: one folder for the database and the `uploads` folder, default is the project folder
 - `SEED_SAMPLE`: set to `0` to start with only the admin account and no sample vendors or listings
@@ -80,6 +82,18 @@ npm start
 ```
 
 On Mac or Linux, use `export` instead of `set`. A failed email never stops a booking from being saved.
+
+## AI Smart Planner
+A box on the home page where a customer types, in plain words, something like
+"Wedding in Pune on 15 December, 400 guests, budget 3 lakh, need a hall and a mandap".
+
+1. **Understand:** Claude reads the text and returns city, date, guests, budget and wanted themes as JSON. Every value is checked against the real list of cities and themes before use. If there is no API key, or the call fails, a simple built-in reader does this step.
+2. **Match:** plain code (not the AI) filters the real listings: free on the date, hall big enough, within budget (with a hall plus decoration, each may use what is left after the cheapest option of the other kind). The AI cannot invent a hall, a price or a free date.
+3. **Explain:** Claude writes a short summary using only the matched listings. The combined price is calculated in code and given to the AI.
+
+Safety: the key stays on the server, customer text is treated as data, calls time out after 12 seconds, requests are rate limited, and `AI_DAILY_LIMIT` caps daily AI calls so a bill cannot run away.
+
+To turn on the AI, set `ANTHROPIC_API_KEY` (get a key at console.anthropic.com). The "AI on" badge appears on the page when it is active.
 
 ## Photos
 
